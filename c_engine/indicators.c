@@ -147,26 +147,22 @@ double *compute_RSI(double *prices, int length, int window)
     /**
      * @brief Computes the Relative Strength Index (RSI) of a price series.
      *
-     * This function calculates the RSI over a sliding window of the given size.
-     * It returns a dynamically allocated array of RSI values, where each element
-     * corresponds to the average of `window` consecutive prices.
+     * The RSI is a momentum oscillator that measures the speed and magnitude of
+     * recent price changes to identify overbought or oversold conditions.
+     * It is calculated using Wilder's smoothing method over a given window size.
      *
-     * RSI is a momentum indicator, used to determine the strength or weakness of a stock's price trend.
-     * Momentum is the rate at which a stock's price changes.
-     * RSI measures the speed and magnitude of a security's recent price changes to detect overbought or oversold conditions in the price of that security.
-     * The RSI is displayed as an oscillator (a line graph) on a scale of zero to 100.
-     * Traditionally, an RSI reading of 70 or above indicates an overbought condition. A reading of 30 or below indicates an oversold condition.
+     * @param prices Pointer to an array of double-precision prices.
+     * @param length Total number of price entries in the array.
+     * @param window Lookback period over which RSI is calculated (typically 14).
      *
-     * @param prices Pointer to an array of double representing the price series.
-     * @param length The total number of prices in the array.
-     * @param window The size of the moving average window (number of periods).
-     *
-     * @return Pointer to a dynamically allocated array of doubles containing
-     *         the RSI values. The length of this array is `length - window`.
-     *         Returns NULL if input parameters are invalid or if memory allocation fails.
+     * @return Pointer to a dynamically allocated array of RSI values.
+     *         The array has length (length - window), corresponding to
+     *         RSI values for prices[window] to prices[length - 1].
+     *         Returns NULL if input is invalid or memory allocation fails.
      *
      * @note Caller is responsible for freeing the returned array.
      */
+
     if (!prices || window >= length || window <= 0)
     {
         return NULL;
@@ -185,6 +181,11 @@ double *compute_RSI(double *prices, int length, int window)
     double *losses = malloc((length - 1) * sizeof(double));
     if (!changes || !gains || !losses)
     {
+        free(RSI_Values);
+        free(changes);
+        free(gains);
+        free(losses);
+
         fprintf(stderr, "Malloc failed. %s.", strerror(errno));
         exit(EXIT_FAILURE);
     }
