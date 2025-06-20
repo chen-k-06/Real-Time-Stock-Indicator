@@ -144,6 +144,61 @@ void cleanup_bands(BollingerBands *band_values);
  *         Each field stores an array of length = length - window + 1.
  *         Returns NULL if input is invalid or memory allocation fails.
  *
- * @note Caller is responsible for freeing the returned struct and struct fields.
+ * @note Caller is responsible for freeing all dynamically allocated memory,
+ *       including the arrays and the struct itself.
  */
 BollingerBands *compute_bollinger_bands(double *prices, int length, int window, double std_devs);
+
+typedef struct
+{
+    int length;
+    double *MACD_Values;
+    double *signal_line_Values;
+} MACD;
+
+/**
+ * @brief Computes the Moving Average Convergence Divergence (MACD) and signal line.
+ *
+ * This function calculates the MACD indicator from a given price series.
+ * The MACD line is defined as the difference between the 12-period and 26-period
+ * Exponential Moving Averages (EMAs). The signal line is a 9-period EMA of the MACD line.
+ *
+ * The result is returned as a pointer to a dynamically allocated `MACD` struct, which
+ * contains both arrays and their length. This technical indicator is commonly used
+ * to assess momentum and potential trend reversals in financial data.
+ *
+ * @param prices    Pointer to an array of double values representing the price series.
+ * @param length    Total number of prices in the array.
+ *
+ * @return Pointer to a dynamically allocated `MACD` struct containing:
+ *         - `MACD_Values`: an array of MACD values,
+ *         - `signal_line_Values`: an array of signal line values,
+ *         - `length`: the number of valid MACD/signal values (equal to `length - 26 - 9 + 1`).
+ *         Returns NULL on invalid input or memory allocation failure.
+ *
+ * @note Caller is responsible for freeing all dynamically allocated memory,
+ *       including the arrays and the struct itself.
+ */
+double *compute_MACD(double *prices, int length, int window);
+
+/**
+ * @brief Computes the On-Balance Volume (OBV) indicator from a price and volume series.
+ *
+ * On-Balance Volume is a technical analysis indicator that relates volume to price movement.
+ * It accumulates volume by adding it when the price closes higher than the previous close
+ * and subtracting it when the price closes lower. If the price closes unchanged, the OBV remains the same.
+ *
+ * The OBV value helps identify the momentum of buying or selling pressure, and divergence between
+ * OBV and price can signal a potential reversal.
+ *
+ * @param prices    Pointer to an array of doubles representing closing prices.
+ * @param volumes   Pointer to an array of doubles representing the corresponding volumes.
+ * @param length    Total number of entries in both the `prices` and `volumes` arrays.
+ *
+ * @return Pointer to a dynamically allocated array of OBV values of length `length`.
+ *         The first OBV value is initialized to 0, and subsequent values accumulate changes.
+ *         Returns NULL on invalid input or memory allocation failure.
+ *
+ * @note Caller is responsible for freeing the returned OBV array.
+ */
+double *compute_OBV(const double *prices, const double *volumes, int length);
