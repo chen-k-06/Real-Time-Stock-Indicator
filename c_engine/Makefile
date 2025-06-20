@@ -8,13 +8,9 @@ CFLAGS = -g -Wall -Werror -pedantic-errors
 .PHONY: all clean
 
 all: $(TARGET)
-$(TARGET): $(OBJS)
-$(CC) $(LDFLAGS) $(OBJS) -o $@ $(LDLIBS)
+$(TARGET): $(OBJS) $(CC) $(LDFLAGS) $(OBJS) -o $@ $(LDLIBS)
 
-%.o: %.c %.h
-$(CC) $(CFLAGS) -c -o $@ $<
-%.o: %.c
-$(CC) $(CFLAGS) -c -o $@ $<
+%.o: %.c %.h $(CC) $(CFLAGS) -c -o $@ $<
+%.o: %.c $(CC) $(CFLAGS) -c -o $@ $<
 
-clean:
-rm -f $(OBJS) $(TARGET) $(TARGET).exe
+clean: rm -f $(OBJS) $(TARGET) $(TARGET).exe
