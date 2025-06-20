@@ -1,11 +1,27 @@
-// main C implementation file
-// contains logic for SMA, EMA, RSI, Bollinger Bands
+/**
+ * indicators.c
+ * ------------
+ * Implements financial technical indicators in C for use in a high-performance stock analysis API.
+ *
+ * Indicators included:
+ *  - Simple Moving Average (SMA
+ *  - Exponential Moving Average (EMA)
+ *  - Relative Strength Index (RSI)
+ *  - Bollinger Bands
+ *
+ * These functions are optimized for speed and are intended to be called from a Python FastAPI server
+ * using ctypes or cffi.
+ *
+ * Author: Kexin Chen
+ * Date: June 20th 2025
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
 
-double *get_SMA(double *prices, int length, int window)
+double *compute_SMA(double *prices, int length, int window)
 {
     /**
      * @brief Computes the Simple Moving Average (SMA) of a price series.
@@ -35,14 +51,13 @@ double *get_SMA(double *prices, int length, int window)
     {
         return NULL;
     }
-    if (window > length)
+    if (window >= length)
     {
         return NULL;
     }
 
     int result_length = length - window + 1;
-    double *SMA_Values; // pointer to an array of doubles
-    SMA_Values = malloc(sizeof(double) * result_length);
+    double *SMA_Values = malloc(sizeof(double) * result_length); // pointer to an array of doubles
     if (!SMA_Values)
     {
         fprintf(stderr, "Malloc failed. %s.", strerror(errno));
@@ -62,8 +77,7 @@ double *get_SMA(double *prices, int length, int window)
     return SMA_Values;
 }
 
-// exponential moving averages (EMAs)
-double *get_EMA(double *prices, int length, int window)
+double *compute_EMA(double *prices, int length, int window)
 {
     /**
      * @brief Computes the Exponential Moving Average (EMA) of a price series.
@@ -95,7 +109,7 @@ double *get_EMA(double *prices, int length, int window)
     {
         return NULL;
     }
-    if (window > length)
+    if (window >= length)
     {
         return NULL;
     }
@@ -128,7 +142,127 @@ double *get_EMA(double *prices, int length, int window)
     return EMA_Values;
 }
 
-// RSI
+double *compute_RSI(double *prices, int length, int window)
+{
+    /**
+     * @brief Computes the Relative Strength Index (RSI) of a price series.
+     *
+     * This function calculates the RSI over a sliding window of the given size.
+     * It returns a dynamically allocated array of RSI values, where each element
+     * corresponds to the average of `window` consecutive prices.
+     *
+     * RSI is a momentum indicator, used to determine the strength or weakness of a stock's price trend.
+     * Momentum is the rate at which a stock's price changes.
+     * RSI measures the speed and magnitude of a security's recent price changes to detect overbought or oversold conditions in the price of that security.
+     * The RSI is displayed as an oscillator (a line graph) on a scale of zero to 100.
+     * Traditionally, an RSI reading of 70 or above indicates an overbought condition. A reading of 30 or below indicates an oversold condition.
+     *
+     * @param prices Pointer to an array of double representing the price series.
+     * @param length The total number of prices in the array.
+     * @param window The size of the moving average window (number of periods).
+     *
+     * @return Pointer to a dynamically allocated array of doubles containing
+     *         the RSI values. The length of this array is `length - window`.
+     *         Returns NULL if input parameters are invalid or if memory allocation fails.
+     *
+     * @note Caller is responsible for freeing the returned array.
+     */
+    if (!prices || window >= length || window <= 0)
+    {
+        return NULL;
+    }
+    int result_length = length - window;
+    double *RSI_Values = malloc(sizeof(double) * result_length); // pointer to an array of doubles
+    if (!RSI_Values)
+    {
+        fprintf(stderr, "Malloc failed. %s.", strerror(errno));
+        exit(EXIT_FAILURE);
+    }
+
+    // compute price changes
+    double *changes = malloc((length - 1) * sizeof(double)); // changes[0] = prices[1] - prices[0] → change from Day 0 to Day 1
+    double *gains = malloc((length - 1) * sizeof(double));
+    double *losses = malloc((length - 1) * sizeof(double));
+    if (!changes || !gains || !losses)
+    {
+        fprintf(stderr, "Malloc failed. %s.", strerror(errno));
+        exit(EXIT_FAILURE);
+    }
+
+    for (int i = 1; i < length; i++)
+    {
+        changes[i - 1] = prices[i] - prices[i - 1];
+    }
+
+    // seperate out gains and losses for first window
+    double gain_sum = 0;
+    double loss_sum = 0;
+    for (int i = 0; i < window; i++)
+    {
+        if (changes[i] > 0)
+        {
+            gains[i] = changes[i];
+            losses[i] = 0;
+            gain_sum += gains[i];
+        }
+        else if (changes[i] < 0)
+        {
+            losses[i] = -1 * changes[i];
+            gains[i] = 0;
+            loss_sum += losses[i];
+        }
+        else
+        {
+            gains[i] = 0;
+            losses[i] = 0;
+        }
+    }
+
+    // compute average gains / losses over first [window] changes
+    double avg_gain = gain_sum / window;
+    double avg_loss = loss_sum / window;
+
+    // calculate first RSI value
+    // this corresponds to the price at prices[window]
+    double RS;
+    if (avg_loss == 0)
+    {
+        RSI_Values[0] = 100;
+    }
+    else
+    {
+        RS = avg_gain / avg_loss;
+        RSI_Values[0] = 100 - (100 / (1 + RS));
+    }
+
+    // calculate subsquent RSI values
+    double gain;
+    double loss;
+    for (int i = window; i < length - 1; i++)
+    {
+        gain = (changes[i] > 0) ? changes[i] : 0.0;
+        loss = (changes[i] < 0) ? -1 * changes[i] : 0.0;
+
+        // Wilder's smoothening formula: updates weighted average
+        avg_gain = (avg_gain * (window - 1) + gain) / window;
+        avg_loss = (avg_loss * (window - 1) + loss) / window;
+
+        if (avg_loss == 0)
+        {
+            RSI_Values[i - window + 1] = 100;
+        }
+        else
+        {
+            RS = avg_gain / avg_loss;
+            RSI_Values[i - window + 1] = 100 - (100 / (1 + RS));
+        }
+    }
+
+    free(changes);
+    free(gains);
+    free(losses);
+    return RSI_Values;
+}
 
 // Bollinger Bands
 
