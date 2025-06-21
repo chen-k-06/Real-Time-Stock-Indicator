@@ -8,6 +8,11 @@
 #define DEFAULT_WINDOW_SIZE 20
 #define SUCCESS 0
 #define FAILURE 1
+#ifdef _WIN32
+#define DLL_EXPORT __declspec(dllexport) // marks functions for export
+#else
+#define DLL_EXPORT
+#endif
 
 /**
  * @brief Computes the Simple Moving Average (SMA) of a price series.
@@ -36,7 +41,7 @@
  *
  * @note Caller is responsible for freeing the returned array.
  */
-double *compute_SMA(double *prices, int length, int window);
+DLL_EXPORT double *compute_SMA(double *prices, int length, int window);
 
 /**
  * @brief Computes the Exponential Moving Average (EMA) of a price series.
@@ -64,7 +69,7 @@ double *compute_SMA(double *prices, int length, int window);
  *
  * @note Caller is responsible for freeing the returned array.
  */
-double *compute_EMA(double *prices, int length, int window);
+DLL_EXPORT double *compute_EMA(double *prices, int length, int window);
 
 /**
  * @brief Computes the Relative Strength Index (RSI) of a price series.
@@ -84,7 +89,7 @@ double *compute_EMA(double *prices, int length, int window);
  *
  * @note Caller is responsible for freeing the returned array.
  */
-double *compute_RSI(double *prices, int length, int window);
+DLL_EXPORT double *compute_RSI(double *prices, int length, int window);
 
 /**
  * @brief Computes the standard deviation of a price series over a sliding window.
@@ -104,7 +109,7 @@ double *compute_RSI(double *prices, int length, int window);
  *
  * @note The caller is responsible for allocating and freeing the `std_devs` array.
  */
-int compute_std_devs(double *prices, int length, int window, double *means, double *std_devs);
+DLL_EXPORT int compute_std_devs(double *prices, int length, int window, double *means, double *std_devs);
 
 typedef struct
 {
@@ -126,7 +131,7 @@ typedef struct
  * @note After calling this function, the pointer `band_values` becomes invalid.
  *       Do not use it after cleanup.
  */
-void cleanup_bands(BollingerBands *band_values);
+DLL_EXPORT void cleanup_bands(BollingerBands *band_values);
 
 /**
  * @brief Computes the Bollinger Bands of a price series.
@@ -152,7 +157,7 @@ void cleanup_bands(BollingerBands *band_values);
  * @note Caller is responsible for freeing all dynamically allocated memory,
  *       including the arrays and the struct itself.
  */
-BollingerBands *compute_bollinger_bands(double *prices, int length, int window, double std_devs);
+DLL_EXPORT BollingerBands *compute_bollinger_bands(double *prices, int length, int window, double std_devs);
 
 typedef struct
 {
@@ -162,10 +167,10 @@ typedef struct
 } MCAD;
 
 /**
- * @brief Frees memory allocated for a MACD struct and its fields.
+ * @brief Frees memory allocated for a MCAD struct and its fields.
  *
- * This function frees the dynamically allocated arrays for the MACD_Values
- * and signal_line_Values inside the given `MACD` struct,
+ * This function frees the dynamically allocated arrays for the MCAD_Values
+ * and signal_line_Values inside the given `MCAD` struct,
  * and then frees the struct itself.
  *
  * @param band_values Pointer to the dynamically allocated BollingerBands struct to clean up.
@@ -173,16 +178,16 @@ typedef struct
  * @note After calling this function, the pointer `band_values` becomes invalid.
  *       Do not use it after cleanup.
  */
-int cleanup_MCAD(MCAD *mcad);
+DLL_EXPORT int cleanup_MCAD(MCAD *mcad);
 
 /**
- * @brief Computes the Moving Average Convergence Divergence (MACD) and signal line.
+ * @brief Computes the Moving Average Convergence Divergence (MCAD) and signal line.
  *
- * This function calculates the MACD indicator from a given price series.
- * The MACD line is defined as the difference between the 12-period and 26-period
- * Exponential Moving Averages (EMAs). The signal line is a 9-period EMA of the MACD line.
+ * This function calculates the MCAD indicator from a given price series.
+ * The MCAD line is defined as the difference between the 12-period and 26-period
+ * Exponential Moving Averages (EMAs). The signal line is a 9-period EMA of the MCAD line.
  *
- * The result is returned as a pointer to a dynamically allocated `MACD` struct, which
+ * The result is returned as a pointer to a dynamically allocated `MCAD` struct, which
  * contains both arrays and their length. This technical indicator is commonly used
  * to assess momentum and potential trend reversals in financial data.
  *
@@ -191,16 +196,16 @@ int cleanup_MCAD(MCAD *mcad);
  * @param prices    Pointer to an array of double values representing the price series.
  * @param length    Total number of prices in the array.
  *
- * @return Pointer to a dynamically allocated `MACD` struct containing:
- *         - `MACD_Values`: an array of MACD values
+ * @return Pointer to a dynamically allocated `MCAD` struct containing:
+ *         - `MCAD_Values`: an array of MCAD values
  *         - `signal_line_Values`: an array of signal line values
- *         - `length`: the number of valid MACD/signal values (equal to `length - 26 - 9 + 1`).
+ *         - `length`: the number of valid MCAD/signal values (equal to `length - 26 - 9 + 1`).
  *         Returns NULL on invalid input or memory allocation failure.
  *
  * @note Caller is responsible for freeing all dynamically allocated memory,
  *       including the arrays and the struct itself.
  */
-MCAD *compute_MCAD(double *prices, int length);
+DLL_EXPORT MCAD *compute_MCAD(double *prices, int length);
 
 /**
  * @brief Computes the On-Balance Volume (OBV) indicator from a price and volume series.
@@ -222,4 +227,4 @@ MCAD *compute_MCAD(double *prices, int length);
  *
  * @note Caller is responsible for freeing the returned OBV array.
  */
-double *compute_OBV(const double *prices, const double *volumes, int length);
+DLL_EXPORT double *compute_OBV(const double *prices, const double *volumes, int length);

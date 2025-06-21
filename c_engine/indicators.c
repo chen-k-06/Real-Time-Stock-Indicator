@@ -26,7 +26,7 @@
 #include <string.h>
 #include <math.h>
 
-double *compute_SMA(double *prices, int length, int window)
+DLL_EXPORT double *compute_SMA(double *prices, int length, int window)
 {
 
     if (!prices || !length || window <= 0 || window >= length)
@@ -56,7 +56,7 @@ double *compute_SMA(double *prices, int length, int window)
     return SMA_Values;
 }
 
-double *compute_EMA(double *prices, int length, int window)
+DLL_EXPORT double *compute_EMA(double *prices, int length, int window)
 {
 
     if (!prices || !length || !window || window >= length)
@@ -96,7 +96,7 @@ double *compute_EMA(double *prices, int length, int window)
     return EMA_Values;
 }
 
-double *compute_RSI(double *prices, int length, int window)
+DLL_EXPORT double *compute_RSI(double *prices, int length, int window)
 {
     if (!prices || window >= length || window <= 0)
     {
@@ -201,7 +201,7 @@ double *compute_RSI(double *prices, int length, int window)
     return RSI_Values;
 }
 
-int compute_std_devs(double *prices, int length, int window, double *means, double *std_devs)
+DLL_EXPORT int compute_std_devs(double *prices, int length, int window, double *means, double *std_devs)
 {
     if (!prices || !means || !std_devs || length <= 0 || window <= 0 || window > length)
     {
@@ -226,7 +226,7 @@ int compute_std_devs(double *prices, int length, int window, double *means, doub
     return EXIT_SUCCESS;
 }
 
-void cleanup_bands(BollingerBands *band_values)
+DLL_EXPORT void cleanup_bands(BollingerBands *band_values)
 {
     free(band_values->middle_band);
     free(band_values->top_band);
@@ -234,7 +234,7 @@ void cleanup_bands(BollingerBands *band_values)
     free(band_values);
 }
 
-BollingerBands *compute_bollinger_bands(double *prices, int length, int window, double std_devs)
+DLL_EXPORT BollingerBands *compute_bollinger_bands(double *prices, int length, int window, double std_devs)
 {
     if (!prices || window >= length || window <= 0 || std_devs <= 0)
     {
@@ -286,7 +286,7 @@ BollingerBands *compute_bollinger_bands(double *prices, int length, int window, 
     return band_values; // pointer to a BollingerBands struct
 }
 
-int cleanup_MCAD(MCAD *mcad)
+DLL_EXPORT int cleanup_MCAD(MCAD *mcad)
 {
     if (!mcad)
     {
@@ -299,7 +299,7 @@ int cleanup_MCAD(MCAD *mcad)
     return (EXIT_SUCCESS);
 }
 
-MCAD *compute_MCAD(double *prices, int length)
+DLL_EXPORT MCAD *compute_MCAD(double *prices, int length)
 {
     // data verification
     if (!prices || length - 26 - 9 + 1 <= 0)
@@ -317,8 +317,8 @@ MCAD *compute_MCAD(double *prices, int length)
         return NULL;
     }
 
-    int macd_raw_len = length - 26 + 1;      // MCAD values from price[25] onwards
-    int result_length = length - 26 - 9 + 1; // usable MACD values after 9-period signal EMA -> price[33] onwards
+    int mcad_raw_len = length - 26 + 1;      // MCAD values from price[25] onwards
+    int result_length = length - 26 - 9 + 1; // usable MCAD values after 9-period signal EMA -> price[33] onwards
 
     // calculate EMA of 12 day and 26 day periods
     double *EMA_12 = compute_EMA(prices, length, 12); // must be freed
@@ -333,7 +333,7 @@ MCAD *compute_MCAD(double *prices, int length)
     }
 
     // calculate raw MCAD values
-    double *temp_MCADs = malloc(sizeof(double) * (macd_raw_len));
+    double *temp_MCADs = malloc(sizeof(double) * (mcad_raw_len));
     if (!temp_MCADs)
     {
         free(EMA_12);
@@ -342,14 +342,14 @@ MCAD *compute_MCAD(double *prices, int length)
         fprintf(stderr, "Malloc failed. %s.\n", strerror(errno));
         return NULL;
     }
-    for (int i = 0; i < macd_raw_len; i++)
+    for (int i = 0; i < mcad_raw_len; i++)
     {
         temp_MCADs[i] = EMA_12[i + 14] - EMA_26[i]; // because the windows are different, EMA_12[0] corresponds with
                                                     // prices[12 -1], whereas EMA_26[0] -> prices[26-1]
     }
 
     // compute signal values
-    mcad->signal_line_Values = compute_EMA(temp_MCADs, macd_raw_len, 9);
+    mcad->signal_line_Values = compute_EMA(temp_MCADs, mcad_raw_len, 9);
     if (!mcad->signal_line_Values)
     {
         free(temp_MCADs);
@@ -385,7 +385,7 @@ MCAD *compute_MCAD(double *prices, int length)
     return mcad;
 }
 
-double *compute_OBV(const double *prices, const double *volumes, int length)
+DLL_EXPORT double *compute_OBV(const double *prices, const double *volumes, int length)
 {
     if (!prices || length <= 0 || !volumes)
     {
