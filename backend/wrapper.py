@@ -191,7 +191,7 @@ def compute_OBV(prices, volumes):
     c_volumes = ffi.new("double[]", volume_arr.tolist()) 
     
     # run C function. store results in pointer
-    result_ptr = lib.compute_EMA(c_prices, c_volumes, length)
+    result_ptr = lib.compute_OBV(c_prices, c_volumes, length)
     if result_ptr == ffi.NULL:
         raise RuntimeError("C function returned NULL")
 

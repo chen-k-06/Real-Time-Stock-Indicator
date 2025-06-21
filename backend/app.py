@@ -3,7 +3,7 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from wrapper import compute_SMA, compute_EMA
+from wrapper import compute_SMA, compute_EMA, compute_RSI, compute_bollinger_bands, compute_MCAD, compute_OBV
 
 # load environment variables (API key)
 load_dotenv()
@@ -48,4 +48,16 @@ class GetEMA(BaseModel):
 @app.post("/get_ema", response_model=list[float])
 def get_ema(request: GetEMA) -> list[float]: 
     result = compute_EMA(request.prices, request.window)
+    return result.tolist()
+
+#------------------------------------------------
+# RSI Retrival 
+#------------------------------------------------
+class GetRSI(BaseModel):
+    prices: list[float]
+    window: int
+
+@app.post("/get_rsi", response_model=list[float])
+def get_rsi(request: GetRSI) -> list[float]: 
+    result = compute_RSI(request.prices, request.window)
     return result.tolist()
