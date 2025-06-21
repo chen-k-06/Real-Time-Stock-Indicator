@@ -16,11 +16,14 @@
  * It returns a dynamically allocated array of SMA values, where each element
  * corresponds to the average of `window` consecutive prices.
  *
- * An SMA is a type of moving average (MA). Moving averages are calculated to identify the trend direction of a stock.
+ * An SMA is a type of moving average (MA). Moving averages are calculated to
+ * identify the trend direction of a stock.
  * It is a trend-following or lagging indicator because it's based on past prices.
  * The longer the period for the moving average, the greater the lag.
- * Fifty-day and 200-day moving average figures are widely followed and considered to be important trading signals.
- * Shorter moving averages are typically used for short-term trading, while longer-term moving averages are more suited for long-term investors.
+ * Fifty-day and 200-day moving average figures are widely followed and considered
+ * to be important trading signals.
+ * Shorter moving averages are typically used for short-term trading, while
+ * longer-term moving averages are more suited for long-term investors.
  *
  * @param prices Pointer to an array of double representing the price series.
  * @param length The total number of prices in the array.
@@ -28,6 +31,7 @@
  *
  * @return Pointer to a dynamically allocated array of doubles containing
  *         the SMA values. The length of this array is `length - window + 1`.
+ *         The first value corresponds with prices[window -1]
  *         Returns NULL if input parameters are invalid or if memory allocation fails.
  *
  * @note Caller is responsible for freeing the returned array.
@@ -55,6 +59,7 @@ double *compute_SMA(double *prices, int length, int window);
  *
  * @return Pointer to a dynamically allocated array of doubles containing
  *         the EMA values. The length of this array is `length - window + 1`.
+ *         The first value corresponds with prices[window -1]
  *         Returns NULL if input parameters are invalid or if memory allocation fails.
  *
  * @note Caller is responsible for freeing the returned array.
@@ -152,9 +157,23 @@ BollingerBands *compute_bollinger_bands(double *prices, int length, int window, 
 typedef struct
 {
     int length;
-    double *MACD_Values;
+    double *MCAD_Values;
     double *signal_line_Values;
 } MACD;
+
+/**
+ * @brief Frees memory allocated for a MACD struct and its fields.
+ *
+ * This function frees the dynamically allocated arrays for the MACD_Values
+ * and signal_line_Values inside the given `MACD` struct,
+ * and then frees the struct itself.
+ *
+ * @param band_values Pointer to the dynamically allocated BollingerBands struct to clean up.
+ *
+ * @note After calling this function, the pointer `band_values` becomes invalid.
+ *       Do not use it after cleanup.
+ */
+void cleanup_MCAD(MACD *mcad);
 
 /**
  * @brief Computes the Moving Average Convergence Divergence (MACD) and signal line.
@@ -167,19 +186,21 @@ typedef struct
  * contains both arrays and their length. This technical indicator is commonly used
  * to assess momentum and potential trend reversals in financial data.
  *
+ * The first MCAD/signal values correspond with the price[33]
+ *
  * @param prices    Pointer to an array of double values representing the price series.
  * @param length    Total number of prices in the array.
  *
  * @return Pointer to a dynamically allocated `MACD` struct containing:
- *         - `MACD_Values`: an array of MACD values,
- *         - `signal_line_Values`: an array of signal line values,
+ *         - `MACD_Values`: an array of MACD values
+ *         - `signal_line_Values`: an array of signal line values
  *         - `length`: the number of valid MACD/signal values (equal to `length - 26 - 9 + 1`).
  *         Returns NULL on invalid input or memory allocation failure.
  *
  * @note Caller is responsible for freeing all dynamically allocated memory,
  *       including the arrays and the struct itself.
  */
-double *compute_MACD(double *prices, int length, int window);
+MACD *compute_MACD(double *prices, int length);
 
 /**
  * @brief Computes the On-Balance Volume (OBV) indicator from a price and volume series.

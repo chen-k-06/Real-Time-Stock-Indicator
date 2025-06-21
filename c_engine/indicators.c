@@ -74,7 +74,7 @@ double *compute_EMA(double *prices, int length, int window)
     int result_length = length - window + 1;
     double alpha = 2.0 / ((double)window + 1.0);                 // smoothening multiplier
     double *EMA_Values = malloc(sizeof(double) * result_length); // pointer to an array of doubles
-    double *SMA_Values = get_SMA(prices, length, window);        // EMA values are based on SMA values with a smoothener applied
+    double *SMA_Values = compute_SMA(prices, length, window);    // EMA values are based on SMA values with a smoothener applied
 
     // data validation
     if (!EMA_Values)
@@ -206,12 +206,12 @@ double *compute_RSI(double *prices, int length, int window)
     return RSI_Values;
 }
 
-// Bollinger Bands
-
 int compute_std_devs(double *prices, int length, int window, double *means, double *std_devs)
 {
     if (!prices || !means || !std_devs || length <= 0 || window <= 0 || window > length)
-        return EXIT_FAILURE;
+    {
+        return NULL;
+    }
 
     int result_length = length - window + 1;
 
@@ -289,6 +289,71 @@ BollingerBands *compute_bollinger_bands(double *prices, int length, int window, 
     return band_values; // pointer to a BollingerBands struct
 }
 
-// MACD
+void cleanup_MCAD(MACD *mcad)
+{
+    free(mcad->MCAD_Values);
+    free(mcad->signal_line_Values);
+    free(mcad);
+}
+
+MACD *compute_MACD(double *prices, int length)
+{
+    // data verification
+    if (!prices || length - 26 - 9 + 1 <= 0)
+    {
+        return NULL;
+    }
+
+    // mermory management
+    MACD *mcad = malloc(sizeof(MACD));
+    if (!mcad)
+    {
+        fprintf(stderr, "Malloc failed. %s.", strerror(errno));
+        return NULL;
+    }
+
+    // allocate struct memory
+    int result_length = length - 26 - 9 + 1; // also the length of EMA_26
+    mcad->length = result_length;
+    mcad->MCAD_Values = malloc(sizeof(double) * result_length);
+    mcad->signal_line_Values = malloc(sizeof(double) * result_length);
+    if (!mcad->MCAD_Values || !mcad->signal_line_Values)
+    {
+        cleanup_MCAD(mcad);
+        fprintf(stderr, "Malloc failed. %s.", strerror(errno));
+        return NULL;
+    }
+
+    // calculate EMA of 12 day and 26 day periods
+    double *EMA_12 = compute_EMA(prices, length, 12); // must be freed
+    double *EMA_26 = compute_EMA(prices, length, 26); // must be freed
+    if (!EMA_12 || !EMA_26)
+    {
+        cleanup_MCAD(mcad);
+        fprintf(stderr, "Compute EMA failed. %s.", strerror(errno));
+        return NULL;
+    }
+
+    // calculate first 8 temp MCAD values
+    double *temp_MCADs = malloc(sizeof(double) * 8);
+    for (int i = 0; i < 8; i++)
+    {
+        temp_MCADs[i] = EMA_12[i + 14] - EMA_26[i]; // because the windows are different, EMA_12[0] corresponds with
+                                                    // prices[12 -1], whereas EMA_26[0] -> prices[26-1]
+    }
+
+    // compute remaining MCAD values
+    for (int i = 0; i < result_length; i++)
+    {
+        mcad->MCAD_Values[i] = EMA_12[i + 14] - EMA_26[i];
+    }
+
+    // compute signal values
+
+    free(temp_MCADs);
+    free(EMA_12);
+    free(EMA_26);
+    return mcad;
+}
 
 // On-Balance Volume (OBV)
