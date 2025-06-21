@@ -10,10 +10,11 @@ LDLIBS = -lm
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
-	$(CC) $(OBJS) -o $@ $^ $(LDLIBS)
-
-%.o: %.c 
+	$(CC) $(LDFLAGS) $(OBJS) -o $@ $(LDLIBS)
+%.o: %.c %.h
 	$(CC) $(CFLAGS) -c -o $@ $<
-
-clean: 
+%.o: %.c
+	$(CC) $(CFLAGS) -c -o $@ $<
+clean:
 	rm -f $(OBJS) $(TARGET) $(TARGET).exe
+
