@@ -173,7 +173,7 @@ typedef struct
  * @note After calling this function, the pointer `band_values` becomes invalid.
  *       Do not use it after cleanup.
  */
-void cleanup_MCAD(MCAD *mcad);
+int cleanup_MCAD(MCAD *mcad);
 
 /**
  * @brief Computes the Moving Average Convergence Divergence (MACD) and signal line.
@@ -186,7 +186,7 @@ void cleanup_MCAD(MCAD *mcad);
  * contains both arrays and their length. This technical indicator is commonly used
  * to assess momentum and potential trend reversals in financial data.
  *
- * The first MCAD/signal values correspond with the price[33]
+ * The first MCAD/signal values correspond with the price[33].
  *
  * @param prices    Pointer to an array of double values representing the price series.
  * @param length    Total number of prices in the array.
@@ -206,7 +206,7 @@ MCAD *compute_MCAD(double *prices, int length);
  * @brief Computes the On-Balance Volume (OBV) indicator from a price and volume series.
  *
  * On-Balance Volume is a technical analysis indicator that relates volume to price movement.
- * It accumulates volume by adding it when the price closes higher than the previous close
+ * It accumulates volume by adding it when the price closes higher than the previous close.
  * and subtracting it when the price closes lower. If the price closes unchanged, the OBV remains the same.
  *
  * The OBV value helps identify the momentum of buying or selling pressure, and divergence between

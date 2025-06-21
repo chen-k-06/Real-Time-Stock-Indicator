@@ -385,8 +385,6 @@ MCAD *compute_MCAD(double *prices, int length)
     return mcad;
 }
 
-// On-Balance Volume (OBV)
-
 double *compute_OBV(const double *prices, const double *volumes, int length)
 {
     if (!prices || length <= 0 || !volumes)
@@ -401,5 +399,25 @@ double *compute_OBV(const double *prices, const double *volumes, int length)
         fprintf(stderr, "Malloc failed. %s.\n", strerror(errno));
         return NULL;
     }
+
+    // populate array
     OBV_values[0] = 0.0;
+    for (int i = 1; i < length; i++)
+    {
+        double change = prices[i] - prices[i - 1];
+        if (change > 0)
+        {
+            OBV_values[i] = OBV_values[i - 1] + volumes[i];
+        }
+        else if (change < 0)
+        {
+            OBV_values[i] = OBV_values[i - 1] - volumes[i];
+        }
+        else
+        {
+            OBV_values[i] = OBV_values[i - 1];
+        }
+    }
+
+    return OBV_values;
 }
