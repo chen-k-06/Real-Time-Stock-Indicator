@@ -26,6 +26,11 @@
 #include <string.h>
 #include <math.h>
 
+DLL_EXPORT void c_free(void *ptr)
+{
+    free(ptr);
+}
+
 DLL_EXPORT double *compute_SMA(double *prices, int length, int window)
 {
 

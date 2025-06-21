@@ -15,6 +15,21 @@
 #endif
 
 /**
+ * @brief Frees memory allocated on the heap.
+ *
+ * This function frees a dynamically allocated memory block pointed to by `ptr`.
+ * It is intended to be called from external code (e.g., Python via FFI) to
+ * properly release memory allocated by C functions in this shared library.
+ *
+ * @param ptr Pointer to a memory block previously allocated with malloc, calloc,
+ *            or realloc. If `ptr` is NULL, no action is taken.
+ *
+ * @note The caller must ensure that `ptr` was allocated by the C runtime used by
+ *       this library to avoid undefined behavior.
+ */
+DLL_EXPORT void c_free(void *ptr);
+
+/**
  * @brief Computes the Simple Moving Average (SMA) of a price series.
  *
  * This function calculates the SMA over a sliding window of the given size.
