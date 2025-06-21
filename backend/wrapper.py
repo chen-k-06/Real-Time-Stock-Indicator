@@ -34,7 +34,7 @@ lib = ffi.dlopen("../c_engine/indicators.so")
 
 # wrap functions
 def compute_SMA(prices, window):
-    # converts prices to a numpy array of doubles
+    # converts prices to a numpy array of doubles -> data verification
     prices_arr = np.asarray(prices, dtype=np.double)
     length = len(prices_arr)
     
@@ -59,7 +59,7 @@ def compute_SMA(prices, window):
     return result
 
 def compute_EMA(prices, window):
-    # converts prices to a numpy array of doubles
+    # converts prices to a numpy array of doubles -> data verification
     prices_arr = np.asarray(prices, dtype=np.double)
     length = len(prices_arr)
 
@@ -82,3 +82,63 @@ def compute_EMA(prices, window):
     lib.c_free(result_ptr)
 
     return result
+
+def compute_RSI(prices, window):
+    # converts prices to a numpy array of doubles -> data verification
+    prices_arr = np.asarray(prices, dtype=np.double)
+    length = len(prices_arr)
+
+    # data verification
+    if window <= 0 or window > length:
+        raise ValueError("Invalid window size")
+    
+    # crate a C array using the values from the numpy array
+    c_prices = ffi.new("double[]", prices_arr.tolist()) 
+
+    # run C function. store results in pointer
+    result_ptr = lib.compute_RSI(c_prices, length, window)
+    if result_ptr == ffi.NULL:
+        raise RuntimeError("C function returned NULL")
+    
+    # copy results into new numpy array 
+    result_length = length - window + 1
+    result = np.array([result_ptr[i] for i in range(result_length)])
+    
+    lib.c_free(result_ptr)
+
+    return result
+    
+def compute_bollinger_bands(prices, window, std_devs):
+    # converts prices to a numpy array of doubles -> data verification
+    prices_arr = np.asarray(prices, dtype=np.double)
+    length = len(prices_arr)
+
+    # data verification
+    if window <= 0 or window > length:
+        raise ValueError("Invalid window size")
+    
+    # crate a C array using the values from the numpy array
+    c_prices = ffi.new("double[]", prices_arr.tolist()) 
+
+    # run C function. store results in pointer
+    result_ptr = lib.compute_bollinger_bands(c_prices, length, window, std_devs)
+    if result_ptr == ffi.NULL:
+        raise RuntimeError("C function returned NULL")
+    
+    # copy struct into new numpy array 
+    result = result_ptr[0]
+
+    if result.middle_band == ffi.NULL or result.top_band == ffi.NULL or result.bottom_band == ffi.NULL:
+        lib.cleanup_bands(result_ptr)
+        raise RuntimeError("Band arrays were not allocated properly")
+
+    n = result.length
+
+    middle = np.frombuffer(ffi.buffer(result.middle_band, n * 8), dtype=np.double).copy()
+    top    = np.frombuffer(ffi.buffer(result.top_band,    n * 8), dtype=np.double).copy()
+    bottom = np.frombuffer(ffi.buffer(result.bottom_band, n * 8), dtype=np.double).copy()
+
+    lib.cleanup_bands(result_ptr)
+
+    return np.stack([bottom, middle, top], axis=1) # 2-D numpy array of (result_length, 3)
+
