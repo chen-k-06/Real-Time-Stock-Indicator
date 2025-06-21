@@ -174,4 +174,31 @@ def compute_MCAD(prices):
 
     return np.stack([MCAD, signal], axis=1)
 
+def compute_OBV(prices, volumes):
+    if prices is None or volumes is None: 
+        raise ValueError("Invalid arguments")
 
+    # converts prices to a numpy array of doubles -> data verification
+    prices_arr = np.asarray(prices, dtype=np.double)
+    volume_arr = np.asarray(volumes, dtype=np.double)
+    length = len(prices_arr)
+
+    if (len(prices) != len(volumes)):
+        raise ValueError("Prices and volumes array should be the same length")
+    
+    # crate a C array using the values from the numpy array
+    c_prices = ffi.new("double[]", prices_arr.tolist()) 
+    c_volumes = ffi.new("double[]", volume_arr.tolist()) 
+    
+    # run C function. store results in pointer
+    result_ptr = lib.compute_EMA(c_prices, c_volumes, length)
+    if result_ptr == ffi.NULL:
+        raise RuntimeError("C function returned NULL")
+
+    # copy results into new numpy array 
+    result_length = length
+    result = np.array([result_ptr[i] for i in range(result_length)])
+    
+    lib.c_free(result_ptr)
+
+    return result
