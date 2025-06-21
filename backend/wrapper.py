@@ -142,3 +142,36 @@ def compute_bollinger_bands(prices, window, std_devs):
 
     return np.stack([bottom, middle, top], axis=1) # 2-D numpy array of (result_length, 3)
 
+def compute_MCAD(prices):
+    if (prices == None or len(prices) == 0):
+        raise RuntimeError("Invalid prices array")
+                           
+    # converts prices to a numpy array of doubles -> data verification
+    prices_arr = np.asarray(prices, dtype=np.double)
+    length = len(prices_arr)
+
+    # crate a C array using the values from the numpy array
+    c_prices = ffi.new("double[]", prices_arr.tolist()) 
+
+    # run C function. store results in pointer
+    result_ptr = lib.compute_MCAD(c_prices, length)
+    if result_ptr == ffi.NULL:
+        raise RuntimeError("C function returned NULL")
+    
+    # copy struct into new numpy array 
+    result = result_ptr[0]
+
+    if result.MCAD_Values == ffi.NULL or result.signal_line_Values == ffi.NULL:
+        lib.cleanup_MCAD(result_ptr)
+        raise RuntimeError("MCAD arrays were not allocated properly")
+
+    n = result.length
+
+    MCAD = np.frombuffer(ffi.buffer(result.MCAD_Values, n * 8), dtype=np.double).copy()
+    signal = np.frombuffer(ffi.buffer(result.signal_line_Values, n * 8), dtype=np.double).copy()
+
+    lib.cleanup_MCAD(result_ptr)
+
+    return np.stack([MCAD, signal], axis=1)
+
+
