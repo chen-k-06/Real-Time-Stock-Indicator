@@ -206,7 +206,7 @@ int compute_std_devs(double *prices, int length, int window, double *means, doub
     if (!prices || !means || !std_devs || length <= 0 || window <= 0 || window > length)
     {
         fprintf(stderr, "Invalid input.\n");
-        return NULL;
+        return EXIT_FAILURE;
     }
 
     int result_length = length - window + 1;
@@ -291,12 +291,12 @@ int cleanup_MCAD(MCAD *mcad)
     if (!mcad)
     {
         fprintf(stderr, "Null pointer passed.\n");
-        return (NULL);
+        return (EXIT_FAILURE);
     }
     free(mcad->MCAD_Values);
     free(mcad->signal_line_Values);
     free(mcad);
-    return (EXIT_FAILURE);
+    return (EXIT_SUCCESS);
 }
 
 MCAD *compute_MCAD(double *prices, int length)
@@ -420,4 +420,9 @@ double *compute_OBV(const double *prices, const double *volumes, int length)
     }
 
     return OBV_values;
+}
+
+int main(void) // needed for compliation
+{
+    return 0;
 }
