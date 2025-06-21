@@ -1,9 +1,10 @@
 CC = gcc
-TARGET = indicators
+TARGET = indicators.so
 C_FILES = $(wildcard *.c)
 OBJS = $(patsubst %.c,%.o,$(C_FILES))
-CFLAGS = -g -Wall -Werror -pedantic-errors
+CFLAGS = -g -Wall -Werror -pedantic-errors -fPIC
 LDLIBS = -lm
+LDFLAGS = -shared
 
 .PHONY: all clean
 
