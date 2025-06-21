@@ -159,7 +159,7 @@ typedef struct
     int length;
     double *MCAD_Values;
     double *signal_line_Values;
-} MACD;
+} MCAD;
 
 /**
  * @brief Frees memory allocated for a MACD struct and its fields.
@@ -173,7 +173,7 @@ typedef struct
  * @note After calling this function, the pointer `band_values` becomes invalid.
  *       Do not use it after cleanup.
  */
-void cleanup_MCAD(MACD *mcad);
+void cleanup_MCAD(MCAD *mcad);
 
 /**
  * @brief Computes the Moving Average Convergence Divergence (MACD) and signal line.
@@ -200,7 +200,7 @@ void cleanup_MCAD(MACD *mcad);
  * @note Caller is responsible for freeing all dynamically allocated memory,
  *       including the arrays and the struct itself.
  */
-MACD *compute_MACD(double *prices, int length);
+MCAD *compute_MCAD(double *prices, int length);
 
 /**
  * @brief Computes the On-Balance Volume (OBV) indicator from a price and volume series.

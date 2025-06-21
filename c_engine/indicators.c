@@ -29,12 +29,9 @@
 double *compute_SMA(double *prices, int length, int window)
 {
 
-    if (!prices || !length || window <= 0)
+    if (!prices || !length || window <= 0 || window >= length)
     {
-        return NULL;
-    }
-    if (window >= length)
-    {
+        fprintf(stderr, "Invalid input.\n");
         return NULL;
     }
 
@@ -42,7 +39,7 @@ double *compute_SMA(double *prices, int length, int window)
     double *SMA_Values = malloc(sizeof(double) * result_length); // pointer to an array of doubles
     if (!SMA_Values)
     {
-        fprintf(stderr, "Malloc failed. %s.", strerror(errno));
+        fprintf(stderr, "Malloc failed. %s.\n", strerror(errno));
         return NULL;
     }
 
@@ -62,12 +59,9 @@ double *compute_SMA(double *prices, int length, int window)
 double *compute_EMA(double *prices, int length, int window)
 {
 
-    if (!prices || !length || !window)
+    if (!prices || !length || !window || window >= length)
     {
-        return NULL;
-    }
-    if (window >= length)
-    {
+        fprintf(stderr, "Invalid input.\n");
         return NULL;
     }
 
@@ -80,14 +74,14 @@ double *compute_EMA(double *prices, int length, int window)
     if (!EMA_Values)
     {
         free(SMA_Values);
-        fprintf(stderr, "Malloc failed. %s.", strerror(errno));
+        fprintf(stderr, "Malloc failed. %s.\n", strerror(errno));
         return NULL;
     }
     if (!SMA_Values)
     {
         free(EMA_Values);
         free(SMA_Values);
-        fprintf(stderr, "Get SMA failed. %s.", strerror(errno));
+        fprintf(stderr, "Get SMA failed. %s.\n", strerror(errno));
         return NULL;
     }
 
@@ -106,13 +100,14 @@ double *compute_RSI(double *prices, int length, int window)
 {
     if (!prices || window >= length || window <= 0)
     {
+        fprintf(stderr, "Invalid input.\n");
         return NULL;
     }
     int result_length = length - window;
     double *RSI_Values = malloc(sizeof(double) * result_length); // pointer to an array of doubles
     if (!RSI_Values)
     {
-        fprintf(stderr, "Malloc failed. %s.", strerror(errno));
+        fprintf(stderr, "Malloc failed. %s.\n", strerror(errno));
         return NULL;
     }
 
@@ -127,7 +122,7 @@ double *compute_RSI(double *prices, int length, int window)
         free(gains);
         free(losses);
 
-        fprintf(stderr, "Malloc failed. %s.", strerror(errno));
+        fprintf(stderr, "Malloc failed. %s.\n", strerror(errno));
         exit(EXIT_FAILURE);
     }
 
@@ -210,6 +205,7 @@ int compute_std_devs(double *prices, int length, int window, double *means, doub
 {
     if (!prices || !means || !std_devs || length <= 0 || window <= 0 || window > length)
     {
+        fprintf(stderr, "Invalid input.\n");
         return NULL;
     }
 
@@ -242,13 +238,14 @@ BollingerBands *compute_bollinger_bands(double *prices, int length, int window, 
 {
     if (!prices || window >= length || window <= 0 || std_devs <= 0)
     {
+        fprintf(stderr, "Invalid input.\n");
         return NULL;
     }
     BollingerBands *band_values = malloc(sizeof(BollingerBands)); // band_values is a pointer to a struct, not a struct variable.
                                                                   // therefore access struct values through ->, not .
     if (!band_values)
     {
-        fprintf(stderr, "Malloc failed. %s.", strerror(errno));
+        fprintf(stderr, "Malloc failed. %s.\n", strerror(errno));
         return NULL;
     }
 
@@ -265,14 +262,14 @@ BollingerBands *compute_bollinger_bands(double *prices, int length, int window, 
     {
         free(stddev_values);
         cleanup_bands(band_values);
-        fprintf(stderr, "Malloc failed. %s.", strerror(errno));
+        fprintf(stderr, "Malloc failed. %s.\n", strerror(errno));
         return NULL;
     }
     if (!SMA_Values)
     {
         free(stddev_values);
         cleanup_bands(band_values);
-        fprintf(stderr, "Get SMA failed. %s.", strerror(errno));
+        fprintf(stderr, "Get SMA failed. %s.\n", strerror(errno));
         return NULL;
     }
 
@@ -289,66 +286,98 @@ BollingerBands *compute_bollinger_bands(double *prices, int length, int window, 
     return band_values; // pointer to a BollingerBands struct
 }
 
-void cleanup_MCAD(MACD *mcad)
+int cleanup_MCAD(MCAD *mcad)
 {
+    if (!mcad)
+    {
+        fprintf(stderr, "Null pointer passed.\n");
+        return (NULL);
+    }
     free(mcad->MCAD_Values);
     free(mcad->signal_line_Values);
     free(mcad);
+    return (EXIT_FAILURE);
 }
 
-MACD *compute_MACD(double *prices, int length)
+MCAD *compute_MCAD(double *prices, int length)
 {
     // data verification
     if (!prices || length - 26 - 9 + 1 <= 0)
     {
+        fprintf(stderr, "Invalid input.\n");
         return NULL;
     }
 
     // mermory management
-    MACD *mcad = malloc(sizeof(MACD));
+    MCAD *mcad = malloc(sizeof(MCAD)); // there is never any need to indivdually free this struct and it's fields.
+                                       // see cleanup_MCAD()
     if (!mcad)
     {
-        fprintf(stderr, "Malloc failed. %s.", strerror(errno));
+        fprintf(stderr, "Malloc failed. %s.\n", strerror(errno));
         return NULL;
     }
 
-    // allocate struct memory
-    int result_length = length - 26 - 9 + 1; // also the length of EMA_26
-    mcad->length = result_length;
-    mcad->MCAD_Values = malloc(sizeof(double) * result_length);
-    mcad->signal_line_Values = malloc(sizeof(double) * result_length);
-    if (!mcad->MCAD_Values || !mcad->signal_line_Values)
-    {
-        cleanup_MCAD(mcad);
-        fprintf(stderr, "Malloc failed. %s.", strerror(errno));
-        return NULL;
-    }
+    int macd_raw_len = length - 26 + 1;      // MCAD values from price[25] onwards
+    int result_length = length - 26 - 9 + 1; // usable MACD values after 9-period signal EMA -> price[33] onwards
 
     // calculate EMA of 12 day and 26 day periods
     double *EMA_12 = compute_EMA(prices, length, 12); // must be freed
     double *EMA_26 = compute_EMA(prices, length, 26); // must be freed
     if (!EMA_12 || !EMA_26)
     {
+        free(EMA_12);
+        free(EMA_26);
         cleanup_MCAD(mcad);
-        fprintf(stderr, "Compute EMA failed. %s.", strerror(errno));
+        fprintf(stderr, "Compute EMA failed. %s.\n", strerror(errno));
         return NULL;
     }
 
-    // calculate first 8 temp MCAD values
-    double *temp_MCADs = malloc(sizeof(double) * 8);
-    for (int i = 0; i < 8; i++)
+    // calculate raw MCAD values
+    double *temp_MCADs = malloc(sizeof(double) * (macd_raw_len));
+    if (!temp_MCADs)
+    {
+        free(EMA_12);
+        free(EMA_26);
+        cleanup_MCAD(mcad);
+        fprintf(stderr, "Malloc failed. %s.\n", strerror(errno));
+        return NULL;
+    }
+    for (int i = 0; i < macd_raw_len; i++)
     {
         temp_MCADs[i] = EMA_12[i + 14] - EMA_26[i]; // because the windows are different, EMA_12[0] corresponds with
                                                     // prices[12 -1], whereas EMA_26[0] -> prices[26-1]
     }
 
-    // compute remaining MCAD values
-    for (int i = 0; i < result_length; i++)
+    // compute signal values
+    mcad->signal_line_Values = compute_EMA(temp_MCADs, macd_raw_len, 9);
+    if (!mcad->signal_line_Values)
     {
-        mcad->MCAD_Values[i] = EMA_12[i + 14] - EMA_26[i];
+        free(temp_MCADs);
+        free(EMA_12);
+        free(EMA_26);
+        cleanup_MCAD(mcad);
+        fprintf(stderr, "Compute EMA failed. %s.\n", strerror(errno));
+        return NULL;
     }
 
-    // compute signal values
+    // populate struct with refined mcad values
+    mcad->MCAD_Values = malloc(sizeof(double) * result_length);
+    if (!mcad->MCAD_Values)
+    {
+        free(temp_MCADs);
+        free(EMA_12);
+        free(EMA_26);
+        cleanup_MCAD(mcad);
+        fprintf(stderr, "Malloc failed. %s.\n", strerror(errno));
+        return NULL;
+    }
+    for (int i = 0; i < result_length; i++)
+    {
+        mcad->MCAD_Values[i] = temp_MCADs[i + 8];
+    }
+
+    // assign final length
+    mcad->length = result_length;
 
     free(temp_MCADs);
     free(EMA_12);
@@ -357,3 +386,20 @@ MACD *compute_MACD(double *prices, int length)
 }
 
 // On-Balance Volume (OBV)
+
+double *compute_OBV(const double *prices, const double *volumes, int length)
+{
+    if (!prices || length <= 0 || !volumes)
+    {
+        fprintf(stderr, "Invalid input.\n");
+        return NULL;
+    }
+
+    double *OBV_values = malloc(sizeof(double) * length);
+    if (!OBV_values)
+    {
+        fprintf(stderr, "Malloc failed. %s.\n", strerror(errno));
+        return NULL;
+    }
+    OBV_values[0] = 0.0;
+}
