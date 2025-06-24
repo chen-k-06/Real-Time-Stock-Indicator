@@ -75,13 +75,13 @@ def get_bollinger_bands(request: GetBB) -> list[float]:
     return result.tolist()
 
 #------------------------------------------------
-# MCAD Retrival
+# MACD Retrival
 #------------------------------------------------
 class GetMACD(BaseModel):
     prices: list[float]
 
 @app.post("/get_macd", response_model=list[float])
-def get_MCAD(request: GetMACD)-> list[float]:
+def get_MACD(request: GetMACD)-> list[float]:
     result = compute_MACD(request.prices)
     return result.tolist()
 

@@ -21,11 +21,11 @@ BollingerBands *compute_bollinger_bands(double *prices, int length, int window, 
 typedef struct
 {
     int length;
-    double *MCAD_Values;
+    double *MACD_Values;
     double *signal_line_Values;
-} MCAD;
-int cleanup_MCAD(MCAD *mcad);
-MCAD *compute_MCAD(double *prices, int length);
+} MACD;
+int cleanup_MACD(MACD *macd);
+MACD *compute_MACD(double *prices, int length);
 double *compute_OBV(const double *prices, const double *volumes, int length);
 """)
 
@@ -149,7 +149,7 @@ def compute_bollinger_bands(prices, window):
 
     return np.stack([bottom, middle, top], axis=1) # 2-D numpy array of (result_length, 3)
 
-def compute_MCAD(prices):
+def compute_MACD(prices):
     if (prices == None or len(prices) == 0):
         raise RuntimeError("Invalid prices array")
                            
@@ -161,25 +161,25 @@ def compute_MCAD(prices):
     c_prices = ffi.new("double[]", prices_arr.tolist()) 
 
     # run C function. store results in pointer
-    result_ptr = lib.compute_MCAD(c_prices, length)
+    result_ptr = lib.compute_MACD(c_prices, length)
     if result_ptr == ffi.NULL:
         raise RuntimeError("C function returned NULL")
     
     # copy struct into new numpy array 
     result = result_ptr[0]
 
-    if result.MCAD_Values == ffi.NULL or result.signal_line_Values == ffi.NULL:
-        lib.cleanup_MCAD(result_ptr)
-        raise RuntimeError("MCAD arrays were not allocated properly")
+    if result.MACD_Values == ffi.NULL or result.signal_line_Values == ffi.NULL:
+        lib.cleanup_MACD(result_ptr)
+        raise RuntimeError("MACD arrays were not allocated properly")
 
     n = result.length
 
-    MCAD = np.frombuffer(ffi.buffer(result.MCAD_Values, n * 8), dtype=np.double).copy()
+    MACD = np.frombuffer(ffi.buffer(result.MACD_Values, n * 8), dtype=np.double).copy()
     signal = np.frombuffer(ffi.buffer(result.signal_line_Values, n * 8), dtype=np.double).copy()
 
-    lib.cleanup_MCAD(result_ptr)
+    lib.cleanup_MACD(result_ptr)
 
-    return np.stack([MCAD, signal], axis=1)
+    return np.stack([MACD, signal], axis=1)
 
 def compute_OBV(prices, volumes):
     if prices is None or volumes is None: 

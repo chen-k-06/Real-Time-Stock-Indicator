@@ -41,6 +41,9 @@ DLL_EXPORT double *compute_SMA(double *prices, int length, int window)
     }
 
     int result_length = length - window + 1;
+    if (result_length <= 0)
+        return NULL;
+
     double *SMA_Values = malloc(sizeof(double) * result_length); // pointer to an array of doubles
     if (!SMA_Values)
     {
@@ -71,6 +74,8 @@ DLL_EXPORT double *compute_EMA(double *prices, int length, int window)
     }
 
     int result_length = length - window + 1;
+    if (result_length <= 0)
+        return NULL;
     double alpha = 2.0 / ((double)window + 1.0);                 // smoothening multiplier
     double *EMA_Values = malloc(sizeof(double) * result_length); // pointer to an array of doubles
     double *SMA_Values = compute_SMA(prices, length, window);    // EMA values are based on SMA values with a smoothener applied
@@ -109,6 +114,8 @@ DLL_EXPORT double *compute_RSI(double *prices, int length, int window)
         return NULL;
     }
     int result_length = length - window;
+    if (result_length <= 0)
+        return NULL;
     double *RSI_Values = malloc(sizeof(double) * result_length); // pointer to an array of doubles
     if (!RSI_Values)
     {
@@ -215,6 +222,8 @@ DLL_EXPORT int compute_std_devs(double *prices, int length, int window, double *
     }
 
     int result_length = length - window + 1;
+    if (result_length <= 0)
+        return NULL;
 
     // compute std dev
     for (int i = 0; i < result_length; i++)
@@ -246,6 +255,7 @@ DLL_EXPORT BollingerBands *compute_bollinger_bands(double *prices, int length, i
         fprintf(stderr, "Invalid input.\n");
         return NULL;
     }
+
     BollingerBands *band_values = malloc(sizeof(BollingerBands)); // band_values is a pointer to a struct, not a struct variable.
                                                                   // therefore access struct values through ->, not .
     if (!band_values)
@@ -256,6 +266,8 @@ DLL_EXPORT BollingerBands *compute_bollinger_bands(double *prices, int length, i
 
     // malloc struct fields
     int result_length = length - window + 1;
+    if (result_length <= 0)
+        return NULL;
     double *SMA_Values = compute_SMA(prices, length, window); // middle band
     band_values->length = result_length;
     band_values->middle_band = SMA_Values; // middle_band points to externally-managed memory; do NOT free both band_values->middle_band AND SMA_Values.
@@ -291,20 +303,20 @@ DLL_EXPORT BollingerBands *compute_bollinger_bands(double *prices, int length, i
     return band_values; // pointer to a BollingerBands struct
 }
 
-DLL_EXPORT int cleanup_MCAD(MCAD *mcad)
+DLL_EXPORT int cleanup_MACD(MACD *macd)
 {
-    if (!mcad)
+    if (!macd)
     {
         fprintf(stderr, "Null pointer passed.\n");
         return (EXIT_FAILURE);
     }
-    free(mcad->MCAD_Values);
-    free(mcad->signal_line_Values);
-    free(mcad);
+    free(macd->MACD_Values);
+    free(macd->signal_line_Values);
+    free(macd);
     return (EXIT_SUCCESS);
 }
 
-DLL_EXPORT MCAD *compute_MCAD(double *prices, int length)
+DLL_EXPORT MACD *compute_MACD(double *prices, int length)
 {
     // data verification
     if (!prices || length - 26 - 9 + 1 <= 0)
@@ -314,16 +326,18 @@ DLL_EXPORT MCAD *compute_MCAD(double *prices, int length)
     }
 
     // mermory management
-    MCAD *mcad = malloc(sizeof(MCAD)); // there is never any need to indivdually free this struct and it's fields.
-                                       // see cleanup_MCAD()
-    if (!mcad)
+    MACD *macd = malloc(sizeof(MACD)); // there is never any need to indivdually free this struct and it's fields.
+                                       // see cleanup_MACD()
+    if (!macd)
     {
         fprintf(stderr, "Malloc failed. %s.\n", strerror(errno));
         return NULL;
     }
 
-    int mcad_raw_len = length - 26 + 1;      // MCAD values from price[25] onwards
-    int result_length = length - 26 - 9 + 1; // usable MCAD values after 9-period signal EMA -> price[33] onwards
+    int macd_raw_len = length - 26 + 1;      // MACD values from price[25] onwards
+    int result_length = length - 26 - 9 + 1; // usable MACD values after 9-period signal EMA -> price[33] onwards
+    if (result_length <= 0)
+        return NULL;
 
     // calculate EMA of 12 day and 26 day periods
     double *EMA_12 = compute_EMA(prices, length, 12); // must be freed
@@ -332,62 +346,62 @@ DLL_EXPORT MCAD *compute_MCAD(double *prices, int length)
     {
         free(EMA_12);
         free(EMA_26);
-        cleanup_MCAD(mcad);
+        cleanup_MACD(macd);
         fprintf(stderr, "Compute EMA failed. %s.\n", strerror(errno));
         return NULL;
     }
 
-    // calculate raw MCAD values
-    double *temp_MCADs = malloc(sizeof(double) * (mcad_raw_len));
-    if (!temp_MCADs)
+    // calculate raw MACD values
+    double *temp_MACDs = malloc(sizeof(double) * (macd_raw_len));
+    if (!temp_MACDs)
     {
         free(EMA_12);
         free(EMA_26);
-        cleanup_MCAD(mcad);
+        cleanup_MACD(macd);
         fprintf(stderr, "Malloc failed. %s.\n", strerror(errno));
         return NULL;
     }
-    for (int i = 0; i < mcad_raw_len; i++)
+    for (int i = 0; i < macd_raw_len; i++)
     {
-        temp_MCADs[i] = EMA_12[i + 14] - EMA_26[i]; // because the windows are different, EMA_12[0] corresponds with
+        temp_MACDs[i] = EMA_12[i + 14] - EMA_26[i]; // because the windows are different, EMA_12[0] corresponds with
                                                     // prices[12 -1], whereas EMA_26[0] -> prices[26-1]
     }
 
     // compute signal values
-    mcad->signal_line_Values = compute_EMA(temp_MCADs, mcad_raw_len, 9);
-    if (!mcad->signal_line_Values)
+    macd->signal_line_Values = compute_EMA(temp_MACDs, macd_raw_len, 9);
+    if (!macd->signal_line_Values)
     {
-        free(temp_MCADs);
+        free(temp_MACDs);
         free(EMA_12);
         free(EMA_26);
-        cleanup_MCAD(mcad);
+        cleanup_MACD(macd);
         fprintf(stderr, "Compute EMA failed. %s.\n", strerror(errno));
         return NULL;
     }
 
-    // populate struct with refined mcad values
-    mcad->MCAD_Values = malloc(sizeof(double) * result_length);
-    if (!mcad->MCAD_Values)
+    // populate struct with refined macd values
+    macd->MACD_Values = malloc(sizeof(double) * result_length);
+    if (!macd->MACD_Values)
     {
-        free(temp_MCADs);
+        free(temp_MACDs);
         free(EMA_12);
         free(EMA_26);
-        cleanup_MCAD(mcad);
+        cleanup_MACD(macd);
         fprintf(stderr, "Malloc failed. %s.\n", strerror(errno));
         return NULL;
     }
     for (int i = 0; i < result_length; i++)
     {
-        mcad->MCAD_Values[i] = temp_MCADs[i + 8];
+        macd->MACD_Values[i] = temp_MACDs[i + 8];
     }
 
     // assign final length
-    mcad->length = result_length;
+    macd->length = result_length;
 
-    free(temp_MCADs);
+    free(temp_MACDs);
     free(EMA_12);
     free(EMA_26);
-    return mcad;
+    return macd;
 }
 
 DLL_EXPORT double *compute_OBV(const double *prices, const double *volumes, int length)

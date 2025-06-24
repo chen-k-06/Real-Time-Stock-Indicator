@@ -177,15 +177,15 @@ DLL_EXPORT BollingerBands *compute_bollinger_bands(double *prices, int length, i
 typedef struct
 {
     int length;
-    double *MCAD_Values;
+    double *MACD_Values;
     double *signal_line_Values;
-} MCAD;
+} MACD;
 
 /**
- * @brief Frees memory allocated for a MCAD struct and its fields.
+ * @brief Frees memory allocated for a MACD struct and its fields.
  *
- * This function frees the dynamically allocated arrays for the MCAD_Values
- * and signal_line_Values inside the given `MCAD` struct,
+ * This function frees the dynamically allocated arrays for the MACD_Values
+ * and signal_line_Values inside the given `MACD` struct,
  * and then frees the struct itself.
  *
  * @param band_values Pointer to the dynamically allocated BollingerBands struct to clean up.
@@ -193,34 +193,34 @@ typedef struct
  * @note After calling this function, the pointer `band_values` becomes invalid.
  *       Do not use it after cleanup.
  */
-DLL_EXPORT int cleanup_MCAD(MCAD *mcad);
+DLL_EXPORT int cleanup_MACD(MACD *macd);
 
 /**
- * @brief Computes the Moving Average Convergence Divergence (MCAD) and signal line.
+ * @brief Computes the Moving Average Convergence Divergence (MACD) and signal line.
  *
- * This function calculates the MCAD indicator from a given price series.
- * The MCAD line is defined as the difference between the 12-period and 26-period
- * Exponential Moving Averages (EMAs). The signal line is a 9-period EMA of the MCAD line.
+ * This function calculates the MACD indicator from a given price series.
+ * The MACD line is defined as the difference between the 12-period and 26-period
+ * Exponential Moving Averages (EMAs). The signal line is a 9-period EMA of the MACD line.
  *
- * The result is returned as a pointer to a dynamically allocated `MCAD` struct, which
+ * The result is returned as a pointer to a dynamically allocated `MACD` struct, which
  * contains both arrays and their length. This technical indicator is commonly used
  * to assess momentum and potential trend reversals in financial data.
  *
- * The first MCAD/signal values correspond with the price[33].
+ * The first MACD/signal values correspond with the price[33].
  *
  * @param prices    Pointer to an array of double values representing the price series.
  * @param length    Total number of prices in the array.
  *
- * @return Pointer to a dynamically allocated `MCAD` struct containing:
- *         - `MCAD_Values`: an array of MCAD values
+ * @return Pointer to a dynamically allocated `MACD` struct containing:
+ *         - `MACD_Values`: an array of MACD values
  *         - `signal_line_Values`: an array of signal line values
- *         - `length`: the number of valid MCAD/signal values (equal to `length - 26 - 9 + 1`).
+ *         - `length`: the number of valid MACD/signal values (equal to `length - 26 - 9 + 1`).
  *         Returns NULL on invalid input or memory allocation failure.
  *
  * @note Caller is responsible for freeing all dynamically allocated memory,
  *       including the arrays and the struct itself.
  */
-DLL_EXPORT MCAD *compute_MCAD(double *prices, int length);
+DLL_EXPORT MACD *compute_MACD(double *prices, int length);
 
 /**
  * @brief Computes the On-Balance Volume (OBV) indicator from a price and volume series.
