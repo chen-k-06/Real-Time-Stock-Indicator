@@ -100,7 +100,7 @@ DLL_EXPORT double *compute_EMA(double *prices, int length, int window)
     for (int i = 1; i < result_length; i++)
     {
         // EMA(current) = ( (Price(current) - EMA(prev) ) x Multiplier) + EMA(prev)
-        EMA_Values[i] = ((prices[i + window - 1] - EMA_Values[i - 1]) * alpha) + EMA_Values[i - 1];
+        EMA_Values[i] = (((double)prices[i + window - 1] - (double)EMA_Values[i - 1]) * alpha) + (double)EMA_Values[i - 1];
     }
     free(SMA_Values);
     return EMA_Values;
@@ -223,7 +223,7 @@ DLL_EXPORT int compute_std_devs(double *prices, int length, int window, double *
 
     int result_length = length - window + 1;
     if (result_length <= 0)
-        return NULL;
+        return EXIT_FAILURE;
 
     // compute std dev
     for (int i = 0; i < result_length; i++)
