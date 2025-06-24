@@ -108,7 +108,7 @@ def compute_RSI(prices, window):
 
     return result
     
-def compute_bollinger_bands(prices, window):
+def compute_bollinger_bands(prices, window, std_devs): # std_devs is the COUNT of standard deviations, not the malloc ed array
     # converts prices to a numpy array of doubles -> data verification
     prices_arr = np.asarray(prices, dtype=np.double)
     length = len(prices_arr)
@@ -116,12 +116,6 @@ def compute_bollinger_bands(prices, window):
     # data verification
     if window <= 0 or window > length:
         raise ValueError("Invalid window size")
-    
-    # malloc space for std_devs array 
-    result_length = length - window + 1
-    std_devs = lib.malloc_std_devs(result_length)
-    if (std_devs == None):
-        raise ValueError("Malloc failed")
     
     # crate a C array using the values from the numpy array
     c_prices = ffi.new("double[]", prices_arr.tolist()) 
@@ -145,7 +139,6 @@ def compute_bollinger_bands(prices, window):
     bottom = np.frombuffer(ffi.buffer(result.bottom_band, n * 8), dtype=np.double).copy()
 
     lib.cleanup_bands(result_ptr)
-    lib.c_free(std_devs)
 
     return np.stack([bottom, middle, top], axis=1) # 2-D numpy array of (result_length, 3)
 
