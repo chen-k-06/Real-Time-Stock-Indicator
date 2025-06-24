@@ -3,7 +3,7 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from wrapper import compute_SMA, compute_EMA, compute_RSI, compute_bollinger_bands, compute_MCAD, compute_OBV
+from wrapper import compute_SMA, compute_EMA, compute_RSI, compute_bollinger_bands, compute_MACD, compute_OBV
 
 # load environment variables (API key)
 load_dotenv()
@@ -60,4 +60,40 @@ class GetRSI(BaseModel):
 @app.post("/get_rsi", response_model=list[float])
 def get_rsi(request: GetRSI) -> list[float]: 
     result = compute_RSI(request.prices, request.window)
+    return result.tolist()
+
+#------------------------------------------------
+# Bollinger Bands Retrival
+#------------------------------------------------
+class GetBB(BaseModel):
+    prices: list[float]
+    window: int
+
+@app.post("/get_bollinger_bands", response_model=list[float])
+def get_bollinger_bands(request: GetBB) -> list[float]:
+    result = compute_bollinger_bands(request.prices, request.window)
+    return result.tolist()
+
+#------------------------------------------------
+# MCAD Retrival
+#------------------------------------------------
+class GetMACD(BaseModel):
+    prices: list[float]
+
+@app.post("/get_macd", response_model=list[float])
+def get_MCAD(request: GetMACD)-> list[float]:
+    result = compute_MACD(request.prices)
+    return result.tolist()
+
+
+#------------------------------------------------
+# OBV Retrival
+#------------------------------------------------
+class GetOBV(BaseModel):
+    prices: list[float]
+    volumes: list[float]
+
+@app.post("/get_obv", response_model=list[float])
+def get_OBV(request: GetOBV)-> list[float]:
+    result = compute_OBV(request.prices, request.volumes)
     return result.tolist()
