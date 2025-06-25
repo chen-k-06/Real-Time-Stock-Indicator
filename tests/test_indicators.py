@@ -10,6 +10,7 @@ from backend.wrapper import (
     compute_SMA,
     compute_EMA,
     compute_RSI,
+    compute_MACD,
     compute_OBV,
     compute_bollinger_bands
 )
@@ -61,6 +62,32 @@ def test_rsi():
     else:
         print("✅ RSI test passed")
 
+def test_macd():
+    data = load_json("test_macd.json")
+    prices = data["prices"]
+    exp_macd = np.array(data["expected_macd"], dtype=float)
+    exp_signal = np.array(data["expected_signal"], dtype=float)
+
+    macd = compute_MACD(prices)
+
+    macd_vals = np.array(macd[0])
+    signal_vals = np.array(macd[1])
+
+    first_macd = macd_vals[:len(exp_macd)]
+    first_signal = signal_vals[:len(exp_signal)]
+
+    ok_macd = np.allclose(first_macd, exp_macd, atol=1e-6)
+    ok_sig  = np.allclose(first_signal, exp_signal, atol=1e-6)
+
+    if not (ok_macd and ok_sig):
+        print("❌ MACD test failed")
+        print("Expected MACD   :", exp_macd)
+        print("Got      MACD   :", first_macd)
+        print("Expected signal :", exp_signal)
+        print("Got      signal :", first_signal)
+    else:
+        print("✅ MACD test passed")
+
 def test_obv():
     data = load_json("test_obv.json")
     prices, volumes = data["prices"], data["volumes"]
@@ -110,4 +137,5 @@ if __name__ == "__main__":
     test_ema()
     test_rsi()
     test_obv()
+    test_macd()
     test_bollinger()
