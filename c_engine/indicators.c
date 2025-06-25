@@ -113,7 +113,7 @@ DLL_EXPORT double *compute_RSI(double *prices, int length, int window)
         fprintf(stderr, "Invalid input.\n");
         return NULL;
     }
-    int result_length = length - window;
+    int result_length = length - window + 1;
     if (result_length <= 0)
         return NULL;
     double *RSI_Values = malloc(sizeof(double) * result_length); // pointer to an array of doubles

@@ -98,7 +98,7 @@ DLL_EXPORT double *compute_EMA(double *prices, int length, int window);
  * @param window Lookback period over which RSI is calculated (typically 14).
  *
  * @return Pointer to a dynamically allocated array of RSI values.
- *         The array has length (length - window), corresponding to
+ *         The array has length (length - window + 1), corresponding to
  *         RSI values for prices[window] to prices[length - 1].
  *         Returns NULL if input is invalid or memory allocation fails.
  *
